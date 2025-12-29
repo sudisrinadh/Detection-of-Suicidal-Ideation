@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+env/
+
+# Data privacy
+data/raw/
+*.mp4
+*.avi
+*.jpg
+*.png
+
+# Models
+models/
+
+# OS files
+.DS_Store
+# Large & sensitive files
+*.csv
+*.xlsx
+*.pdf
+*.h5
+*.pickle
+
+# Dataset specifically
+code/Suicide_Detection.csv

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Survey: Detection of Suicidal Ideation in Students</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: auto;
+            padding: 30px;
+            background-color: #f4f7f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        p {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        #calibration {
+            text-align: center;
+            font-weight: bold;
+            color: #e67e22;
+            margin: 20px 0;
+        }
+        #video { width: 320px; height: 240px; display: none; }
+        #canvas { display: none; }
+        #output {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #27ae60;
+            margin: 20px 0;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 8px;
+        }
+        form {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .question {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+        input[type="text"], input[type="number"], select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+            accent-color: #3498db;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        button[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button[type="submit"]:hover {
+            background: #2980b9;
+        }
+        button[type="submit"]:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .required {
+            color: #e74c3c;
+        }
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            form { padding: 20px; }
+            .question { padding: 10px; }
+        }
+    </style>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- MediaPipe CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.3/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <h1>Anonymous Survey: Detection of Suicidal Ideation in Students</h1>
+    <p>Your webcam will be used to monitor eye blinks. Grant permission when prompted.</p>
+    <p id="calibration">Please blink 5 times to calibrate the system...</p>
+    
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    
+    <form id="myForm">
+        <div class="question">
+            <label for="name">Name <span class="required">*</span></label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        
+        <div class="question">
+            <label for="age">Age <span class="required">*</span></label>
+            <input type="number" id="age" name="age" required min="1">
+        </div>
+        
+        <div class="question">
+            <label for="gender">Gender <span class="required">*</span></label>
+            <select id="gender" name="gender" required>
+                <option value="">Select...</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+        </div>
+        
+        <div class="question">
+            <label for="year">Year of Study <span class="required">*</span></label>
+            <select id="year" name="year" required>
+                <option value="">Select...</option>
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="Final Year">Final Year</option>
+                <option value="Postgraduate">Postgraduate</option>
+            </select>
+        </div>
+        
+        <div class="question">
+            <label>Have you ever had thoughts about ending your life? <span class="required">*</span></label>
+            <input type="radio" name="q1" value="Yes" required> Yes
+            <input type="radio" name="q1" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Do you feel like you're a burden to others?</label>
+            <input type="radio" name="q2" value="Yes"> Yes
+            <input type="radio" name="q2" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Have you ever seriously considered suicide in the past year?</label>
+            <input type="radio" name="q3" value="Yes"> Yes
+            <input type="radio" name="q3" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Do you ever think people would be better off without you?</label>
+            <input type="radio" name="q4" value="Yes"> Yes
+            <input type="radio" name="q4" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Have you been isolating yourself from friends or family lately?</label>
+            <input type="radio" name="q5" value="Yes"> Yes
+            <input type="radio" name="q5" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Do you feel comfortable talking to someone about your emotional struggles?</label>
+            <input type="radio" name="q6" value="Yes"> Yes
+            <input type="radio" name="q6" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Have you ever spoken to a counselor or therapist?</label>
+            <input type="radio" name="q7" value="Yes"> Yes
+            <input type="radio" name="q7" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Have you stopped doing things you once enjoyed?</label>
+            <input type="radio" name="q8" value="Yes"> Yes
+            <input type="radio" name="q8" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Have you recently had trouble focusing or staying motivated?</label>
+            <input type="radio" name="q9" value="Yes"> Yes
+            <input type="radio" name="q9" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Do you experience trouble sleeping or eating due to emotional stress?</label>
+            <input type="radio" name="q10" value="Yes"> Yes
+            <input type="radio" name="q10" value="No"> No
+        </div>
+        
+        <div class="question">
+            <label>Rate how often you feel hopeless.</label>
+            <input type="range" name="q11" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate how often you feel emotionally exhausted.</label>
+            <input type="range" name="q12" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate your recent sleep quality.</label>
+            <input type="range" name="q13" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate your ability to enjoy daily activities.</label>
+            <input type="range" name="q14" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate your current level of stress.</label>
+            <input type="range" name="q15" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate your motivation to get out of bed in the morning.</label>
+            <input type="range" name="q16" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate how lonely you've felt in the past two weeks.</label>
+            <input type="range" name="q17" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate how often you feel overwhelmed by your responsibilities.</label>
+            <input type="range" name="q18" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate how safe you feel expressing your emotions to others.</label>
+            <input type="range" name="q19" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label>Rate how much support you feel from your friends/family.</label>
+            <input type="range" name="q20" min="0" max="6" value="0">
+            <div class="slider-labels">
+                <span>Not at all</span><span>Very often</span>
+            </div>
+        </div>
+        
+        <div class="question">
+            <label for="q21">What do you usually think about when you feel sad or overwhelmed? <span class="required">*</span></label>
+            <textarea id="q21" name="q21" required></textarea>
+        </div>
+        
+        <div class="question">
+            <label for="q22">How have your emotions been over the past two weeks? Please describe. <span class="required">*</span></label>
+            <textarea id="q22" name="q22" required></textarea>
+        </div>
+        
+        <div class="question">
+            <label for="q23">Do you often feel empty, hopeless, or disconnected from others? Explain if you’d like. <span class="required">*</span></label>
+            <textarea id="q23" name="q23" required></textarea>
+        </div>
+        
+        <div class="question">
+            <label for="q24">If your emotions were a weather report today, what would it be and why? <span class="required">*</span></label>
+            <textarea id="q24" name="q24" required></textarea>
+        </div>
+        
+        <div class="question">
+            <label for="q25">Finish this sentence: “Lately, I’ve been feeling...” <span class="required">*</span></label>
+            <textarea id="q25" name="q25" required></textarea>
+        </div>
+        
+        <div class="question">
+            <label for="q26">What do you usually do when you’re feeling emotionally low? <span class="required">*</span></label>
+            <textarea id="q26" name="q26" required></textarea>
+        </div>
+        
+        <div class="question">
+            <label for="q27">What kind of support would make you feel safer or more supported emotionally? <span class="required">*</span></label>
+            <textarea id="q27" name="q27" required></textarea>
+        </div>
+        
+        <div class="question">
+            <label for="q28">What keeps you going on difficult days? What gives you hope? <span class="required">*</span></label>
+            <textarea id="q28" name="q28" required></textarea>
+        </div>
+        
+        <button type="submit" id="submitBtn" disabled>Submit Survey</button>
+    </form>
+    
+    <div id="output">Blink count: 0</div>
+    
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const output = document.getElementById('output');
+        const calibrationDiv = document.getElementById('calibration');
+        const form = document.getElementById('myForm');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let blinkCount = 0;
+        let prevBlinkState = false;
+        let EAR_THRESHOLD = 0.22; // Initial, will calibrate
+        const CONSECUTIVE_FRAMES = 4;
+        let blinkFrameCounter = 0;
+        let calibrationBlinks = 0;
+        let calibrationEARs = [];
+        let isCalibrating = true;
+        
+        // Function to calculate Eye Aspect Ratio (EAR) for one eye
+        function getEAR(eyePoints) {
+            const p2_p6 = distance(eyePoints[1], eyePoints[5]);
+            const p3_p5 = distance(eyePoints[2], eyePoints[4]);
+            const p1_p4 = distance(eyePoints[0], eyePoints[3]);
+            return (p2_p6 + p3_p5) / (2.0 * p1_p4);
+        }
+        
+        // Euclidean distance
+        function distance(p1, p2) {
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        }
+        
+        // MediaPipe FaceMesh setup
+        const faceMesh = new FaceMesh({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`;
+        }});
+        faceMesh.setOptions({
+            maxNumFaces: 1,
+            refineLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        faceMesh.onResults(onResults);
+        
+        // Callback for face detection results
+        function onResults(results) {
+            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+                calibrationDiv.textContent = "Face not detected. Ensure good lighting and center your face.";
+                return;
+            }
+            
+            const landmarks = results.multiFaceLandmarks[0];
+            
+            // Right eye landmarks
+            const rightEye = [
+                landmarks[33],  landmarks[160], landmarks[158],
+                landmarks[133], landmarks[153], landmarks[144]
+            ];
+            
+            // Left eye
+            const leftEye = [
+                landmarks[263], landmarks[387], landmarks[385],
+                landmarks[362], landmarks[380], landmarks[373]
+            ];
+            
+            const rightEAR = getEAR(rightEye);
+            const leftEAR = getEAR(leftEye);
+            const avgEAR = (rightEAR + leftEAR) / 2.0;
+            
+            if (isCalibrating) {
+                // Calibration: Collect EAR during blinks
+                if (avgEAR < 0.3) { // Assume low EAR is a blink
+                    calibrationEARs.push(avgEAR);
+                    if (!prevBlinkState) {
+                        calibrationBlinks++;
+                        prevBlinkState = true;
+                        calibrationDiv.textContent = `Calibration: ${calibrationBlinks}/5 blinks detected...`;
+                    }
+                } else {
+                    prevBlinkState = false;
+                }
+                
+                if (calibrationBlinks >= 5) {
+                    // Calculate average EAR during blinks for threshold
+                    EAR_THRESHOLD = calibrationEARs.reduce((a, b) => a + b, 0) / calibrationEARs.length + 0.05;
+                    isCalibrating = false;
+                    calibrationDiv.textContent = "Calibration complete! Fill out the survey.";
+                }
+            } else {
+                // Normal blink detection
+                if (avgEAR < EAR_THRESHOLD) {
+                    blinkFrameCounter++;
+                } else {
+                    if (blinkFrameCounter >= CONSECUTIVE_FRAMES) {
+                        blinkCount++;
+                        output.textContent = `Blink count: ${blinkCount}`;
+                        checkSubmitConditions();
+                    }
+                    blinkFrameCounter = 0;
+                }
+            }
+        }
+        
+        // Start webcam
+        const camera = new Camera(video, {
+            onFrame: async () => {
+                await faceMesh.send({image: video});
+            },
+            width: 320,
+            height: 240
+        });
+        camera.start().catch((err) => {
+            calibrationDiv.textContent = "Error accessing webcam. Please allow camera access.";
+            console.error(err);
+        });
+        
+        // Function to check if form is valid and blink count > 0
+        function checkSubmitConditions() {
+            const isFormValid = form.checkValidity();
+            const isBlinkValid = blinkCount > 0 && !isCalibrating;
+            submitBtn.disabled = !(isFormValid && isBlinkValid);
+        }
+        
+        // Add event listeners to form fields for real-time validation
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('input', checkSubmitConditions);
+            input.addEventListener('change', checkSubmitConditions);
+        });
+        
+        // Handle form submission and Excel export
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (isCalibrating) {
+                alert("Please complete calibration by blinking 5 times.");
+                return;
+            }
+            
+            // Collect form data
+            const formData = new FormData(form);
+            const data = {
+                Timestamp: new Date().toISOString(),
+                Name: formData.get('name'),
+                Age: formData.get('age'),
+                Gender: formData.get('gender'),
+                Year_of_Study: formData.get('year'),
+                Q1_Thoughts_Ending_Life: formData.get('q1'),
+                Q2_Feel_Burden: formData.get('q2'),
+                Q3_Considered_Suicide_Past_Year: formData.get('q3'),
+                Q4_People_Better_Off: formData.get('q4'),
+                Q5_Isolating: formData.get('q5'),
+                Q6_Comfortable_Talking: formData.get('q6'),
+                Q7_Spoke_Counselor: formData.get('q7'),
+                Q8_Stopped_Enjoying: formData.get('q8'),
+                Q9_Trouble_Focusing: formData.get('q9'),
+                Q10_Sleep_Eat_Stress: formData.get('q10'),
+                Q11_Feel_Hopeless: formData.get('q11'),
+                Q12_Emotionally_Exhausted: formData.get('q12'),
+                Q13_Sleep_Quality: formData.get('q13'),
+                Q14_Enjoy_Activities: formData.get('q14'),
+                Q15_Stress_Level: formData.get('q15'),
+                Q16_Motivation_Bed: formData.get('q16'),
+                Q17_Lonely: formData.get('q17'),
+                Q18_Overwhelmed: formData.get('q18'),
+                Q19_Safe_Expressing: formData.get('q19'),
+                Q20_Support_Family_Friends: formData.get('q20'),
+                Q21_Sad_Overwhelmed_Thoughts: formData.get('q21'),
+                Q22_Emotions_Past_Two_Weeks: formData.get('q22'),
+                Q23_Empty_Hopeless_Disconnected: formData.get('q23'),
+                Q24_Emotions_Weather_Report: formData.get('q24'),
+                Q25_Lately_Feeling: formData.get('q25'),
+                Q26_When_Emotionally_Low: formData.get('q26'),
+                Q27_Support_Safer: formData.get('q27'),
+                Q28_Keeps_Going_Hope: formData.get('q28'),
+                Blink_Count: blinkCount
+            };
+            
+            // Create Excel workbook and sheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet([data]);
+            XLSX.utils.book_append_sheet(wb, ws, "Responses");
+            
+            // Generate and download file
+            XLSX.writeFile(wb, `survey_responses_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            alert(`Survey submitted! Data saved to Excel file. Total blinks: ${blinkCount}`);
+            
+            // Reset form and blink counter
+            form.reset();
+            blinkCount = 0;
+            output.textContent = `Blink count: 0`;
+            isCalibrating = true;
+            calibrationBlinks = 0;
+            calibrationEARs = [];
+            calibrationDiv.textContent = "Please blink 5 times to calibrate the system...";
+            checkSubmitConditions();
+        });
+    </script>
+</body>
+</html>

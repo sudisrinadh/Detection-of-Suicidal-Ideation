@@ -1,0 +1,36 @@
+{
+    "yesno": [
+        "Have you ever had thoughts about ending your life?",
+        "Do you feel like you're a burden to others?",
+        "Have you ever seriously considered suicide in the past year?",
+        "Do you ever think people would be better off without you?",
+        "Have you been isolating yourself from friends or family lately?",
+        "Do you feel comfortable talking to someone about your emotional struggles?",
+        "Have you ever spoken to a counselor or therapist?",
+        "Have you stopped doing things you once enjoyed?",
+        "Have you recently had trouble focusing or staying motivated?",
+        "Do you experience trouble sleeping or eating due to emotional stress?"
+    ],
+    "rating": [
+        "Rate how often you feel hopeless.",
+        "Rate how often you feel emotionally exhausted.",
+        "Rate your recent sleep quality.",
+        "Rate your ability to enjoy daily activities.",
+        "Rate your current level of stress.",
+        "Rate your motivation to get out of bed in the morning.",
+        "Rate how lonely you've felt in the past two weeks.",
+        "Rate how often you feel overwhelmed by your responsibilities.",
+        "Rate how safe you feel expressing your emotions to others.",
+        "Rate how much support you feel from your friends/family."
+    ],
+    "text": [
+        "What do you usually think about when you feel sad or overwhelmed?",
+        "How have your emotions been over the past two weeks? Please describe.",
+        "Do you often feel empty, hopeless, or disconnected from others? Explain if you'd like.",
+        "If your emotions were a weather report today, what would it be and why?",
+        "Finish this sentence: 'Lately, I've been feeling...'",
+        "What do you usually do when you're feeling emotionally low?",
+        "What kind of support would make you feel safer or more supported emotionally?",
+        "What keeps you going on difficult days? What gives you hope?"
+    ]
+}

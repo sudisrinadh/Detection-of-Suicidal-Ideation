@@ -1,0 +1,18 @@
+{
+    "yesno": [
+        "Do you feel comfortable talking to someone about your emotional struggles?",  
+        "Have you ever seriously considered suicide in the past year?",                
+        "Have you ever had thoughts about ending your life?",                          
+        "Do you ever think people would be better off without you?",                   
+        "Do you feel like you're a burden to others?"                                 
+    ],
+    "rating": [
+        "Rate how much support you feel from your friends/family.",                    
+        "Rate your current level of stress.",                                         
+        "Rate how lonely you've felt in the past two weeks."                        
+    ],
+    "text": [
+        "What kind of support would make you feel safer or more supported emotionally?",
+        "Have you recently had trouble focusing or staying motivated?"                  
+    ]
+}
